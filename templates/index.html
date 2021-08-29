@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Hide and Seek</title>
+    <style>
+        .buttonDiv{
+            font-family: 'ZCOOL QingKe HuangYou', cursive;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="buttonDiv">
+            <div>
+            <a href="/hider">Hider</a>
+            <a href="/seeker">Seeker</a>
+            </div>
+    </div>
+    <script>
+        let errMsg= new URLSearchParams(location.search).get("err")
+        if(errMsg){
+            alert(errMsg)
+        }
+    </script>
+</body>
+</html>

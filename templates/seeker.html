@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.1/socket.io.js"
+        integrity="sha512-oFOCo2/3DtjrJG4N27BjSLQWoiBv171sK6a+JiWjp/7agxC2nCUP358AqzxkBUb5jX8g6CYLPdSKQTbC0weCwA=="
+        crossorigin="anonymous"></script>
+    <title>seeker</title>
+    <style>
+        body,
+        button {
+            font-family: 'ZCOOL QingKe HuangYou', cursive;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="display: flex;justify-content: center;">
+        <div>
+            <p id="text" style="width: 100%;text-align: center; font-size:250%; transform: translate(11px)">Start game?
+            </p>
+            <button style="cursor: pointer; position: relative; height: 4.5rem; width: 100%;" id="btn">Start<img
+                    src="/static/loading.webp" id="loading"
+                    style="display: none; max-height: 90%;position: relative;"></button>
+            <button onclick="endGame()" style="width: 100%; cursor:pointer">End Game</button>
+        </div>
+    </div>
+    <script>
+        let socket;
+        let interval;
+        const btn = document.getElementById("btn")
+        const text = document.getElementById("text")
+        const loading = document.getElementById("loading").style
+        btn.onclick = function () {
+            loading.display = "inline"
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+
+                    fetch("/api/seeker/start", {
+                        method: "POST",
+                        body: JSON.stringify({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
+                        headers: { "Content-Type": "application/json" }
+                    })
+                        .then(res => {
+                            if (res.ok) {
+                                loading.display = "none"
+                                text.textContent = "Please wait for all hiders to find their hiding spot"
+                                btn.style.display = "none"
+                                socket = io("/")
+                                socket.once("allFound", () => {
+                                    text.textContent = "All hiders have found their hiding spot! Find them!"
+                                    navigator.vibrate(1000)
+                                    interval = setInterval(navigator.geolocation.getCurrentPosition.bind(navigator.geolocation,getPosition), 1000)
+
+                                    socket.on("gameEnd", (data) => {
+                                        alert(data.message)
+                                        location.href = "/"
+                                    })
+                                })
+                            }
+                        })
+                })
+            } else {
+                alert("Geolocation is not supported by this browser.")
+            }
+        }
+        function getPosition(position) {
+            console.log(position)
+            socket.emit("seekerPosition", { latitude: position.coords.latitude, longitude: position.coords.longitude })
+        }
+        function endGame() {
+            if (confirm("Are you sure you want to end the game?")) {
+                clearInterval(interval);
+                fetch("/api/seeker/end")
+                    .then(res => {
+                        if (res.ok) {
+                            location.href = "/"
+                        }
+                    })
+            }
+        }
+    </script>
+</body>
+
+</html>

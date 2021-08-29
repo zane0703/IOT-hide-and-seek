@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.1/socket.io.js"
+        integrity="sha512-oFOCo2/3DtjrJG4N27BjSLQWoiBv171sK6a+JiWjp/7agxC2nCUP358AqzxkBUb5jX8g6CYLPdSKQTbC0weCwA=="
+        crossorigin="anonymous"></script>
+    <title>Hider</title>
+    <style>
+        body,
+        button {
+            font-family: 'ZCOOL QingKe HuangYou', cursive;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="display: flex;justify-content: center;">
+        <div>
+            <p id="text" style="font-size:300%">Please wait for game to be started</p>
+            <button style="display: none;cursor: pointer; position: relative; height: 4.5rem;" id="btn">Found a spot!
+                <img src="/static/loading.webp" id="loading"
+                    style="display: none; max-height: 90%;position: relative;"></button>
+        </div>
+    </div>
+    <span style="display: none;" id="id">{{id}}</span>
+    <script lang="application/typescript">
+        const id = {{id}}
+        const btn = document.getElementById("btn")
+        const text = document.getElementById("text")
+        const loading = document.getElementById("loading").style
+        /** 
+         * @type {import('socket.io-client')}
+         * */
+        const socket = io("/")
+        io
+        socket.on("gameEnd", (data) => {
+            alert(data.message)
+            location.href = "/"
+        })
+        socket.on("start", function () {
+            socket.off("start")
+            text.textContent = "Please find your hiding sport"
+            btn.style.display = "block"
+        })
+        btn.onclick = function () {
+
+            if (navigator.geolocation) {
+                loading.display = "inline"
+                navigator.geolocation.getCurrentPosition((position) => {
+                    fetch("/api/hider/" + id + "/location", {
+                        method: "PUT",
+                        body: JSON.stringify({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
+                        headers: { "Content-Type": "application/json" }
+                    }).then(res => {
+                        loading.display = "none"
+                        if (res.ok) {
+                            text.textContent = "Please wait for everyone"
+                            btn.style.display = "none"
+                            socket.on("allFound", () => {
+                                socket.off("allFound")
+                                text.textContent = "Stay Quiet and Out of Sight!"
+                                btn.style.display = "block"
+                                btn.textContent = "I got caught!"
+                                btn.onclick = function () {
+                                    if (confirm("been caught?")) {
+                                        loading.display = "inline"
+                                        fetch("/api/hider/" + id, {
+                                            method: "DELETE",
+                                            body: '{"caught":true}',
+                                            headers: { "Content-Type": "application/json: charset=UTF-8" }
+                                        }).then(res => {
+                                            loading.display = "none"
+                                            if (res.ok) {
+                                                btn.style.display = "none"
+                                                text.textContent = "You have been caught! Please wait for the game to be end"
+                                            }
+                                        })
+                                    }
+                                }
+                            })
+                        } else {
+                            if (res.status === 422) {
+                                alert("Your Hiding sport too far\nPlease find a new hiding sport")
+                            }
+                        }
+                    })
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.")
+            }
+        }
+
+    </script>
+</body>
+
+</html>

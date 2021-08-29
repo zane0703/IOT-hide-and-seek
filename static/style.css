@@ -1,0 +1,16 @@
+a,button{  
+    display: block;
+    background-color: red;
+    color: white;
+    text-decoration: none;
+    font-size: 2rem;
+    padding: 0.5rem;
+    margin: 1rem;
+}
+a:hover,bottom:hover{
+    background-color: rgb(155,0, 0);
+}
+body{
+    background-image: url("background.webp");
+    background-color: #cccccc;
+}
